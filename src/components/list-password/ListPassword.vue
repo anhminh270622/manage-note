@@ -82,7 +82,7 @@
                 :maxlength="10"
                 v-model:value="record.phone"
                 placeholder="Nhập số điện thoại"
-                @input="validatePhoneNumber"
+                @keypress="isNumber"
                 @blur="(event) => (record.phone = event.target.value.trim())"
             />
           </template>
@@ -105,10 +105,10 @@
         <template v-else-if="column.dataIndex === 'email'">
           <template v-if="record.isEditing">
             <a-input
-                :maxlength="10"
                 v-model:value="record.email"
+                type="email"
                 placeholder="Nhập email"
-                @blur="(event) => (record.phone = event.target.value.trim())"
+                @blur="(event) => (record.email = event.target.value.trim())"
             />
           </template>
           <template v-else>
@@ -125,7 +125,7 @@ import tableData from "@/components/list-password/tableData.js";
 import Breadcrumb from "@/components/breadcrumb/Breadcrumb.vue";
 import { EditOutlined, DeleteOutlined, EyeInvisibleOutlined, SaveOutlined } from '@ant-design/icons-vue';
 import { h } from 'vue';
-import { validatePhoneNumber } from "@/constans/index.js";
+import { isNumber } from "@/constans/index.js";
 import {
   addTypePassword,
   deleteTypePassword,
@@ -157,7 +157,7 @@ export default {
   },
 
   methods: {
-    validatePhoneNumber,
+    isNumber,
     SaveOutlined,
     DeleteOutlined, EyeInvisibleOutlined, h, EditOutlined,
     togglePasswordVisibility(record) {

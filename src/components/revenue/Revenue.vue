@@ -140,6 +140,14 @@ export default {
             this.loading = false;
           });
     },
+    formatAmount(value) {
+      if (!value) return '';
+      return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    },
+    onAmountInput(event, record) {
+      const rawValue = event.target.value.replace(/,/g, ''); // loại bỏ dấu phẩy
+      record.amount = rawValue;
+    }
   }
 }
 </script>
@@ -225,7 +233,11 @@ export default {
         </template>
         <template v-else-if="column.dataIndex === 'amount'">
           <template v-if="record.isEditing">
-            <a-input v-model:value="record.amount" @keypress="isNumber" placeholder="Nhập giá tiền"/>
+            <a-input
+                :value="formatAmount(record.amount)"
+                @input="onAmountInput($event, record)"
+                @keypress="isNumber"
+                placeholder="Nhập giá tiền"/>
           </template>
           <template v-else>
             {{ Number(text).toLocaleString('en-US') }}
