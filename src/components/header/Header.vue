@@ -45,7 +45,6 @@ export default {
         <li>Cài đặt</li>
         <li @click="onLogout">Đăng xuất</li>
       </ul>
-
     </div>
     <div v-else>
       <a-avatar :size="40">

@@ -4,7 +4,8 @@ export default {
             key: '1',
             username: 'admin',
             password: 'admin',
+            user_id: 1,
             role: 'admin',
-        }
+        },
     ],
 }

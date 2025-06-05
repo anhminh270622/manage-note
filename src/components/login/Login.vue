@@ -1,5 +1,6 @@
 <script>
 import tableData from "@/components/login/tableData.js";
+import { getAllUsers } from "@/api/user.js";
 
 export default {
   name: 'Login',
@@ -13,10 +14,17 @@ export default {
       },
     };
   },
+  mounted() {
+    this.getAllUser();
+  },
   methods: {
     onFinish(values) {
       if (values.username && values.password) {
-        const user = this.dataLogin.find(user => user.username === values.username && user.password === values.password);
+        const usersArray = Object.values(this.dataLogin); // chuyển thành mảng
+        const user = usersArray.find(user =>
+            user.username === values.username && user.password === values.password
+        );
+
         if (user) {
           this.$message.success('Đăng nhập thành công!');
           setTimeout(() => {
@@ -31,14 +39,15 @@ export default {
         }
       }
     },
-    onFinishFailed(errorInfo) {
-      console.log('Failed:', errorInfo);
-      this.$message.error('Login failed. Please check your input.');
-    }
-    ,
+    async getAllUser() {
+      await getAllUsers().then(res => {
+        this.dataLogin = res.data
+      }).catch(error => {
+        this.$message.error('Lỗi khi tải dữ liệu người dùng: ' + error.message);
+      })
+    },
   }
-  ,
-}
+};
 </script>
 
 <template>
@@ -49,6 +58,7 @@ export default {
       autocomplete="off"
       @finish="onFinish"
       class="login-form"
+      ref="loginForm"
   >
     <h2>Đăng nhập</h2>
     <a-form-item
@@ -65,6 +75,9 @@ export default {
         :rules="[{ required: true, message: 'Nhập mật khẩu!' }]"
     >
       <a-input-password v-model:value="formState.password"/>
+    </a-form-item>
+    <a-form-item style="text-align: right">
+      Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
     </a-form-item>
     <a-form-item class="login-button">
       <a-button type="primary" html-type="submit">Đăng nhập</a-button>

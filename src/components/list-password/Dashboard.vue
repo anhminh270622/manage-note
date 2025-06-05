@@ -19,7 +19,8 @@ export default {
       formItem: {
         name: '',
       },
-      isLoading: false
+      isLoading: false,
+      userId: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).userId : '',
     };
   },
   mounted() {
@@ -43,6 +44,7 @@ export default {
             this.isLoading = true;
             const newBox = {
               id: Date.now(),
+              userId: this.userId,
               name: this.formItem.name,
               value: this.formItem.name.toLowerCase().replace(/\s+/g, '-'),
             };
@@ -67,7 +69,7 @@ export default {
       await getAllBox().then(res => {
         this.isLoading = false;
         this.dataBox = Object.entries(res?.data || {})
-            .filter(([_, item]) => typeof item === 'object' && item !== null)
+            .filter(([_, item]) => typeof item === 'object' && item !== null && item.userId === this.userId)
             .map(([id, item]) => ({
               ...item,
               id: id,

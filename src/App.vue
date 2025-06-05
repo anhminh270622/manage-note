@@ -1,9 +1,6 @@
 <template>
   <a-config-provider :theme="theme">
-    <div v-if="!isLogin">
-      <Login/>
-    </div>
-    <div v-else>
+    <div v-if="isLogin">
       <a-layout>
         <a-layout-header class="layout-header">
           <Header/>
@@ -19,6 +16,9 @@
           </a-layout-content>
         </a-layout>
       </a-layout>
+    </div>
+    <div v-else>
+      <RouterView/>
     </div>
   </a-config-provider>
 </template>

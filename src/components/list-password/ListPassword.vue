@@ -148,6 +148,7 @@ export default {
       dataSource: [],
       loading: false,
       type: '',
+      userId: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).userId : '',
     };
   },
   mounted() {
@@ -186,6 +187,7 @@ export default {
         password: '',
         email: '',
         type: this.type,
+        userId: this.userId,
         isShowPass: false,
         isEditing: true
       }
@@ -230,7 +232,7 @@ export default {
       this.loading = true;
       getAllTypePassword().then(res => {
         this.dataSource = Object.entries(res?.data || {})
-            .filter(([_, item]) => typeof item === 'object' && item !== null && item.type === this.type)
+            .filter(([_, item]) => typeof item === 'object' && item !== null && item.type === this.type && item.userId === this.userId)
             .map(([key, item]) => ({
               ...item,
               key: key,

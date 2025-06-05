@@ -18,6 +18,7 @@ export default {
       dataSource: [],
       loading: false,
       tagOption: tableData.getTags,
+      userId: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).userId : '',
     };
   },
   mounted() {
@@ -41,6 +42,7 @@ export default {
     isNumber,
     SaveOutlined,
     DeleteOutlined, h, EditOutlined,
+
     deleteRecord(record) {
       this.$confirm({
         title: 'Xác nhận xóa',
@@ -67,6 +69,7 @@ export default {
         },
       });
     },
+
     handleEdit(record) {
       record.isEditing = !record.isEditing;
     },
@@ -94,6 +97,8 @@ export default {
         endDate: '',
         note: '',
         isEditing: true,
+        userId: this.userId,
+        tag: 0, // Mặc định là cho vay
       }
       addRevenue(params).then(() => {
         this.$message.success('Thêm mới thành công');
@@ -116,7 +121,7 @@ export default {
           .then(res => {
             if (res?.status === 200) {
               this.dataSource = Object.entries(res?.data || {})
-                  .filter(([_, item]) => typeof item === 'object' && item !== null)
+                  .filter(([_, item]) => typeof item === 'object' && item !== null && item.userId === this.userId)
                   .map(([id, item]) => ({
                     ...item,
                     key: id, // rất quan trọng
