@@ -1,23 +1,16 @@
 <template>
-  <Breadcrumb :breadcrumb="breadcrumb" title="Danh sách mật khẩu"/>
+  <Breadcrumb :breadcrumb="breadcrumb" title="Danh sách mật khẩu" />
   <div class="add-password">
     <div class="info-table">
       <div>Tổng số bản ghi: <span class="value">{{ dataSource.length }}</span></div>
     </div>
-    <a-button type="primary"
-              @click="addRecord">
+    <a-button type="primary" @click="addRecord">
       Thêm mới
     </a-button>
   </div>
   <div class="list-password">
-    <a-table
-        :columns="columns"
-        :data-source="dataSource"
-        row-key="key"
-        bordered
-        :scroll="{ x: 'max-content' }"
-        :loading="loading"
-    >
+    <a-table :columns="columns" :data-source="dataSource" row-key="key" bordered :scroll="{ x: 'max-content' }"
+      :loading="loading">
       <template #bodyCell="{ column, index, text, record }">
         <template v-if="column.dataIndex === 'index'">
           {{ index + 1 }}
@@ -25,41 +18,23 @@
         <template v-if="column.dataIndex === 'action'">
           <a-space style="display: flex; gap: 15px;">
             <a-tooltip :title="'Sửa'" v-if="!record.isEditing">
-              <a-button
-                  shape="circle"
-                  @click="handleEdit(record)"
-                  :icon="h( EditOutlined)"
-                  type="primary"
-              />
+              <a-button shape="circle" @click="handleEdit(record)" :icon="h(EditOutlined)" type="primary" />
             </a-tooltip>
             <a-tooltip title="Lưu" v-else>
-              <a-button
-                  shape="circle"
-                  @click="editRecord(record)"
-                  :icon="h( SaveOutlined )"
-                  type="primary"
-              />
+              <a-button shape="circle" @click="editRecord(record)" :icon="h(SaveOutlined)" type="primary" />
             </a-tooltip>
             <a-tooltip title="Xóa">
-              <a-button shape="circle"
-                        @click="deleteRecord(record)"
-                        :icon="h(DeleteOutlined)"
-                        type="primary"
-                        danger
-              />
+              <a-button shape="circle" @click="deleteRecord(record)" :icon="h(DeleteOutlined)" type="primary" danger />
             </a-tooltip>
             <a-tooltip title="Xem mật khẩu">
-              <a-button @click="togglePasswordVisibility(record)" shape="circle" :icon="h(EyeInvisibleOutlined)"/>
+              <a-button @click="togglePasswordVisibility(record)" shape="circle" :icon="h(EyeInvisibleOutlined)" />
             </a-tooltip>
           </a-space>
         </template>
         <template v-else-if="column.dataIndex === 'name'">
           <template v-if="record.isEditing">
-            <a-input
-                v-model:value="record.name"
-                placeholder="Nhập tên"
-                @blur="(event) => (record.name = event.target.value.trim())"
-            />
+            <a-input v-model:value="record.name" placeholder="Nhập tên"
+              @blur="(event) => (record.name = event.target.value.trim())" />
           </template>
           <template v-else>
             {{ text }}
@@ -67,10 +42,8 @@
         </template>
         <template v-else-if="column.dataIndex === 'username'">
           <template v-if="record.isEditing">
-            <a-input
-                v-model:value="record.username"
-                placeholder="Nhập tên đăng nhập"
-                @blur="(event) => (record.username = event.target.value.trim())"/>
+            <a-input v-model:value="record.username" placeholder="Nhập tên đăng nhập"
+              @blur="(event) => (record.username = event.target.value.trim())" />
           </template>
           <template v-else>
             {{ text }}
@@ -78,13 +51,8 @@
         </template>
         <template v-else-if="column.dataIndex === 'phone'">
           <template v-if="record.isEditing">
-            <a-input
-                :maxlength="10"
-                v-model:value="record.phone"
-                placeholder="Nhập số điện thoại"
-                @input="validatePhoneNumber"
-                @blur="(event) => (record.phone = event.target.value.trim())"
-            />
+            <a-input :maxlength="10" v-model:value="record.phone" placeholder="Nhập số điện thoại"
+              @input="handlePhoneInput" @blur="(event) => (record.phone = event.target.value.trim())" />
           </template>
           <template v-else>
             {{ text }}
@@ -92,11 +60,8 @@
         </template>
         <template v-else-if="column.dataIndex === 'password'">
           <template v-if="record.isEditing">
-            <a-input
-                v-model:value="record.password"
-                placeholder="Nhập mật khẩu"
-                @blur="(event) => (record.password = event.target.value.trim())"
-            />
+            <a-input v-model:value="record.password" placeholder="Nhập mật khẩu"
+              @blur="(event) => (record.password = event.target.value.trim())" />
           </template>
           <template v-else>
             <span>{{ record.isShowPass ? text : '*****' }}</span>
@@ -104,12 +69,8 @@
         </template>
         <template v-else-if="column.dataIndex === 'email'">
           <template v-if="record.isEditing">
-            <a-input
-                :maxlength="10"
-                v-model:value="record.email"
-                placeholder="Nhập email"
-                @blur="(event) => (record.phone = event.target.value.trim())"
-            />
+            <a-input v-model:value="record.email" placeholder="Nhập email"
+              @blur="(event) => (record.email = event.target.value.trim())" />
           </template>
           <template v-else>
             {{ text }}
@@ -160,6 +121,16 @@ export default {
     validatePhoneNumber,
     SaveOutlined,
     DeleteOutlined, EyeInvisibleOutlined, h, EditOutlined,
+    handlePhoneInput(event) {
+      // Chỉ cho phép nhập số
+      const value = event.target.value.replace(/\D/g, '');
+      event.target.value = value;
+      // Cập nhật v-model
+      const record = event.target.closest('tr')?.__vueParentComponent?.ctx?.record;
+      if (record) {
+        record.phone = value;
+      }
+    },
     togglePasswordVisibility(record) {
       record.isShowPass = !record.isShowPass;
     },
@@ -177,6 +148,8 @@ export default {
         this.loading = false;
       })
     },
+    
+
     addRecord() {
       this.loading = true;
       const params = {
@@ -232,13 +205,13 @@ export default {
       this.loading = true;
       getAllTypePassword().then(res => {
         this.dataSource = Object.entries(res?.data || {})
-            .filter(([_, item]) => typeof item === 'object' && item !== null && item.type === this.type && item.userId === this.userId)
-            .map(([key, item]) => ({
-              ...item,
-              key: key,
-              isShowPass: false,
-              isEditing: false,
-            }));
+          .filter(([_, item]) => typeof item === 'object' && item !== null && item.type === this.type && item.userId === this.userId)
+          .map(([key, item]) => ({
+            ...item,
+            key: key,
+            isShowPass: false,
+            isEditing: false,
+          }));
       }).catch(() => {
         this.$message.error('Lỗi khi tải dữ liệu');
       }).finally(() => {

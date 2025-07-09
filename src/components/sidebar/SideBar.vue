@@ -1,5 +1,5 @@
 <script setup>
-import { AreaChartOutlined, UnorderedListOutlined } from '@ant-design/icons-vue';
+import { AreaChartOutlined, KeyOutlined, UnorderedListOutlined } from '@ant-design/icons-vue';
 import { RouterLink } from 'vue-router';
 
 </script>
@@ -12,7 +12,7 @@ import { RouterLink } from 'vue-router';
         Thống kê
       </RouterLink>
       <RouterLink to="/list-password">
-        <UnorderedListOutlined/>
+        <KeyOutlined />
         Danh sách mật khẩu
       </RouterLink>
       <RouterLink to="/revenue">

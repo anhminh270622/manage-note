@@ -14,10 +14,11 @@ export default {
   data() {
     return {
       breadcrumb: tableData.breadcrumb,
-      dataBox: tableData.dataBox,
+      dataBox: [],
       isOpenModal: false,
       formItem: {
         name: '',
+        color: '#6ebcd9',
       },
       isLoading: false,
       userId: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).userId : '',
@@ -37,44 +38,47 @@ export default {
     addNewBox() {
       this.isOpenModal = true;
       this.formItem.name = "";
+      this.formItem.color = "#6ebcd9";
     },
     handleOk() {
       this.$refs.formRef.validate()
-          .then(() => {
-            this.isLoading = true;
-            const newBox = {
-              id: Date.now(),
-              userId: this.userId,
-              name: this.formItem.name,
-              value: this.formItem.name.toLowerCase().replace(/\s+/g, '-'),
-            };
-            addBox(newBox).then(res => {
-              this.$message.success('Thêm mới thành công');
-              this.isOpenModal = false;
-              this.loadData();
-            }).catch(() => {
-              this.$message.error('Có lỗi xảy ra khi thêm mới');
-            })
-            this.$refs.formRef.resetFields();
+        .then(() => {
+          this.isLoading = true;
+          const newBox = {
+            id: Date.now(),
+            userId: this.userId,
+            name: this.formItem.name,
+            color: this.formItem.color,
+            value: this.formItem.name.toLowerCase().replace(/\s+/g, '-'),
+          };
+          addBox(newBox).then(res => {
+            this.$message.success('Thêm mới thành công');
+            this.isOpenModal = false;
+            this.loadData();
+          }).catch(() => {
+            this.$message.error('Có lỗi xảy ra khi thêm mới');
           })
-          .catch(() => {
-            this.$message.error('Vui lòng điền đầy đủ thông tin');
-          })
-          .finally(() => {
-            this.isLoading = false;
-          })
+          this.$refs.formRef.resetFields();
+        })
+        .catch(() => {
+          this.$message.error('Vui lòng điền đầy đủ thông tin');
+        })
+        .finally(() => {
+          this.isLoading = false;
+        })
     },
     async loadData() {
       this.isLoading = true;
       await getAllBox().then(res => {
         this.isLoading = false;
         this.dataBox = Object.entries(res?.data || {})
-            .filter(([_, item]) => typeof item === 'object' && item !== null && item.userId === this.userId)
-            .map(([id, item]) => ({
-              ...item,
-              id: id,
-              isEditing: false
-            })) || [];
+          .filter(([_, item]) => typeof item === 'object' && item !== null && item.userId === this.userId)
+          .map(([id, item]) => ({
+            ...item,
+            id: id,
+            color: item.color || '#6ebcd9', // Màu mặc định nếu không có
+            isEditing: false
+          })) || [];
       }).catch(() => {
         this.isLoading = false;
         this.$message.error('Lỗi khi tải dữ liệu');
@@ -128,7 +132,7 @@ export default {
 
 <template>
   <a-spin :spinning="isLoading">
-    <Breadcrumb :breadcrumb="breadcrumb" title="Danh sách"/>
+    <Breadcrumb :breadcrumb="breadcrumb" title="Danh sách" />
     <a-row justify="end">
       <a-button type="primary" @click="addNewBox">
         Thêm mới
@@ -136,32 +140,26 @@ export default {
     </a-row>
     <a-row>
       <a-col :span="24" class="box-container">
-        <div class="box" v-for="box in dataBox" :key="box.value" @click="onNextPage(box.value)">
+        <div class="box" v-for="box in dataBox" :key="box.value" @click="onNextPage(box.value)" :style="{ backgroundColor: box.color }">
           <div v-if="box.isEditing" class="edit-box">
-            <a-input @click="(e)=>e.stopPropagation()" v-model:value="box.name" placeholder="Nhập tên danh sách"
-                     @blur="(event) => (box.name = event.target.value.trim())"/>
+            <a-input @click="(e) => e.stopPropagation()" v-model:value="box.name" placeholder="Nhập tên danh sách"
+              @blur="(event) => (box.name = event.target.value.trim())" />
+            <div class="color-picker-container" @click="(e) => e.stopPropagation()">
+              <label>Màu nền:</label>
+              <input type="color" v-model="box.color" class="color-picker" />
+            </div>
           </div>
           <div v-else class="box-name">{{ box.name }}</div>
           <div class="action">
             <a-space style="display: flex">
               <a-tooltip :title="'Sửa'" v-if="!box.isEditing">
-                <a-button
-                    shape="circle"
-                    @click="handleEdit(box)"
-                    :icon="h( EditOutlined)"
-                    type="primary"
-                />
+                <a-button shape="circle" @click="handleEdit(box)" :icon="h(EditOutlined)" type="primary" />
               </a-tooltip>
               <a-tooltip title="Lưu" v-else>
-                <a-button
-                    shape="circle"
-                    @click="editRecord(box)"
-                    :icon="h( SaveOutlined )"
-                    type="primary"
-                />
+                <a-button shape="circle" @click="editRecord(box)" :icon="h(SaveOutlined)" type="primary" />
               </a-tooltip>
               <a-tooltip title="Xóa">
-                <a-button shape="circle" @click="deleteRecord(box)" :icon="h(DeleteOutlined)" type="primary" danger/>
+                <a-button shape="circle" @click="deleteRecord(box)" :icon="h(DeleteOutlined)" type="primary" danger />
               </a-tooltip>
             </a-space>
           </div>
@@ -171,21 +169,17 @@ export default {
     </a-row>
     <div>
       <a-modal v-model:open="isOpenModal" title="Thêm mới danh sách" @ok="handleOk" style="width: 400px">
-        <a-form
-            layout="vertical"
-            ref="formRef"
-            :model="formItem"
-        >
+        <a-form layout="vertical" ref="formRef" :model="formItem">
           <a-row gutter="16">
             <a-col span="24">
-              <a-form-item
-                  label="Tên danh sách"
-                  name="name"
-                  :rules="[{ required: true, message: 'Trường bắt buộc' }]">
-                <a-input
-                    v-model:value="formItem.name"
-                    placeholder="Nhập tên danh sách"
-                    @blur="(event) => (formItem.name = event.target.value.trim())"/>
+              <a-form-item label="Tên danh sách" name="name" :rules="[{ required: true, message: 'Trường bắt buộc' }]">
+                <a-input v-model:value="formItem.name" placeholder="Nhập tên danh sách"
+                  @blur="(event) => (formItem.name = event.target.value.trim())" />
+              </a-form-item>
+            </a-col>
+            <a-col span="24">
+              <a-form-item label="Màu nền">
+                <input type="color" v-model="formItem.color" class="color-picker-modal" />
               </a-form-item>
             </a-col>
           </a-row>
@@ -218,6 +212,39 @@ export default {
   color: #ffffff;
   font-weight: bold;
   box-shadow: rgba(149, 157, 165, 0.2) 0 8px 24px;
+  cursor: pointer;
+  flex-direction: column;
+}
+
+.edit-box {
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.color-picker-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.color-picker {
+  width: 40px;
+  height: 25px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.color-picker-modal {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
   cursor: pointer;
 }
 

@@ -60,11 +60,6 @@ export default {
             title: 'Tag',
             dataIndex: 'tag',
             key: 'tag',
-            filters: [
-                { text: 'Cho vay', value: '0' },
-                { text: 'Nợ', value: '1' },
-                { text: 'Khác', value: '2' },
-            ],
         },
         {
             title: 'Ghi chú',

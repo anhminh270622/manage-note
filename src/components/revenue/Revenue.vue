@@ -19,6 +19,13 @@ export default {
       loading: false,
       tagOption: tableData.getTags,
       userId: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).userId : '',
+      // Filter options
+      filters: {
+        name: '',
+        tag: null,
+        sortAmount: false, // false: không sắp xếp, true: sắp xếp từ bé đến lớn
+        sortDate: null, // null: không sắp xếp, 'asc': tăng dần, 'desc': giảm dần
+      }
     };
   },
   mounted() {
@@ -26,23 +33,59 @@ export default {
   },
   computed: {
     totalLoanAmount() {
-      const total = this.dataSource
+      const total = this.filteredDataSource
           .filter(item => item.tag === 0)
           .reduce((total, item) => total + (Number(item.amount) || 0), 0);
       return total > 0 ? total.toLocaleString('en-US') : '0';
     },
     totalDebtAmount() {
-      const total = this.dataSource
+      const total = this.filteredDataSource
           .filter(item => item.tag === 1)
           .reduce((total, item) => total + (Number(item.amount) || 0), 0);
       return total > 0 ? total.toLocaleString('en-US') : '0';
+    },
+    filteredDataSource() {
+      let filtered = [...this.dataSource];
+      
+      // Filter by name
+      if (this.filters.name) {
+        filtered = filtered.filter(item => 
+          item.name.toLowerCase().includes(this.filters.name.toLowerCase())
+        );
+      }
+      
+      // Filter by tag
+      if (this.filters.tag !== null && this.filters.tag !== undefined && this.filters.tag !== '') {
+        filtered = filtered.filter(item => item.tag === this.filters.tag);
+      }
+      
+      // Sort by amount
+      if (this.filters.sortAmount) {
+        filtered.sort((a, b) => Number(a.amount) - Number(b.amount));
+      }
+      
+      // Sort by date
+      if (this.filters.sortDate) {
+        filtered.sort((a, b) => {
+          const dateA = dayjs(a.startDate, 'DD/MM/YYYY');
+          const dateB = dayjs(b.startDate, 'DD/MM/YYYY');
+          
+          if (this.filters.sortDate === 'asc') {
+            return dateA.isBefore(dateB) ? -1 : dateA.isAfter(dateB) ? 1 : 0;
+          } else if (this.filters.sortDate === 'desc') {
+            return dateA.isAfter(dateB) ? -1 : dateA.isBefore(dateB) ? 1 : 0;
+          }
+          return 0;
+        });
+      }
+      
+      return filtered;
     }
   },
   methods: {
     isNumber,
     SaveOutlined,
     DeleteOutlined, h, EditOutlined,
-
     deleteRecord(record) {
       this.$confirm({
         title: 'Xác nhận xóa',
@@ -140,15 +183,76 @@ export default {
             this.loading = false;
           });
     },
+    resetFilters() {
+      this.filters = {
+        name: '',
+        tag: null,
+        sortAmount: false,
+        sortDate: null,
+      };
+    }
   }
 }
 </script>
 
 <template>
   <Breadcrumb :breadcrumb="breadcrumb" title="Vay trả"/>
+  
+  <!-- Filter Section -->
+  <div class="filter-section">
+    <h3 class="filter-title">Lọc dữ liệu</h3>
+    <a-row :gutter="16" align="middle">
+      <a-col :span="6">
+        <a-input 
+          v-model:value="filters.name" 
+          placeholder="Tìm kiếm theo tên"
+          allow-clear
+        />
+      </a-col>
+      <a-col :span="6">
+        <a-select 
+          v-model:value="filters.tag" 
+          placeholder="Lọc theo tag"
+          style="width: 100%"
+          allow-clear
+        >
+          <a-select-option v-for="tag in tagOption" :key="tag.id" :value="tag.id">
+            {{ tag.name }}
+          </a-select-option>
+        </a-select>
+      </a-col>
+      <a-col :span="6">
+        <a-switch 
+          v-model:checked="filters.sortAmount"
+          checked-children="Sắp xếp tiền tăng dần" 
+          un-checked-children="Không sắp xếp"
+        />
+      </a-col>
+      <a-col :span="6">
+        <a-select 
+          v-model:value="filters.sortDate" 
+          placeholder="Sắp xếp ngày bắt đầu"
+          style="width: 100%"
+          allow-clear
+        >
+          <a-select-option value="asc">Ngày tăng dần</a-select-option>
+          <a-select-option value="desc">Ngày giảm dần</a-select-option>
+        </a-select>
+      </a-col>
+    </a-row>
+    
+    <a-row justify="center" style="margin-top: 16px;">
+      <a-col>
+        <a-button @click="resetFilters" type="default">
+          Xóa bộ lọc
+        </a-button>
+      </a-col>
+    </a-row>
+  </div>
+
   <div class="add-revenue">
     <div class="info-table">
-      <div>Tổng số bản ghi: <span class="value">{{ dataSource.length }}</span></div>
+      <div>Tổng số bản ghi: <span class="value">{{ filteredDataSource.length }}</span></div>
       <div>Tổng tiền cho vay: <span class="value price-loan">{{ totalLoanAmount }} đ</span></div>
       <div>Tổng tiền nợ: <span class="value price">{{ totalDebtAmount }} đ</span></div>
     </div>
@@ -161,7 +265,7 @@ export default {
 
     <a-table
         :columns="columns"
-        :data-source="dataSource"
+        :data-source="filteredDataSource"
         row-key="key"
         bordered
         :scroll="{ x: 'max-content' }"
@@ -279,6 +383,18 @@ svg {
   font-size: 20px;
   color: #1890ff;
   cursor: pointer;
+}
+.filter-title{
+  text-align: left;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+.filter-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
 }
 
 .add-revenue {
