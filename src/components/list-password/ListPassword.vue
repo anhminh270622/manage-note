@@ -86,7 +86,7 @@ import tableData from "@/components/list-password/tableData.js";
 import Breadcrumb from "@/components/breadcrumb/Breadcrumb.vue";
 import { EditOutlined, DeleteOutlined, EyeInvisibleOutlined, SaveOutlined } from '@ant-design/icons-vue';
 import { h } from 'vue';
-import { validatePhoneNumber } from "@/constans/index.js";
+import { isNumber } from "@/constans/index.js";
 import {
   addTypePassword,
   deleteTypePassword,
@@ -118,7 +118,7 @@ export default {
   },
 
   methods: {
-    validatePhoneNumber,
+    isNumber,
     SaveOutlined,
     DeleteOutlined, EyeInvisibleOutlined, h, EditOutlined,
     handlePhoneInput(event) {

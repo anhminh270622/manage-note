@@ -34,42 +34,42 @@ export default {
   computed: {
     totalLoanAmount() {
       const total = this.filteredDataSource
-          .filter(item => item.tag === 0)
-          .reduce((total, item) => total + (Number(item.amount) || 0), 0);
+        .filter(item => item.tag === 0)
+        .reduce((total, item) => total + (Number(item.amount) || 0), 0);
       return total > 0 ? total.toLocaleString('en-US') : '0';
     },
     totalDebtAmount() {
       const total = this.filteredDataSource
-          .filter(item => item.tag === 1)
-          .reduce((total, item) => total + (Number(item.amount) || 0), 0);
+        .filter(item => item.tag === 1)
+        .reduce((total, item) => total + (Number(item.amount) || 0), 0);
       return total > 0 ? total.toLocaleString('en-US') : '0';
     },
     filteredDataSource() {
       let filtered = [...this.dataSource];
-      
+
       // Filter by name
       if (this.filters.name) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
           item.name.toLowerCase().includes(this.filters.name.toLowerCase())
         );
       }
-      
+
       // Filter by tag
       if (this.filters.tag !== null && this.filters.tag !== undefined && this.filters.tag !== '') {
         filtered = filtered.filter(item => item.tag === this.filters.tag);
       }
-      
+
       // Sort by amount
       if (this.filters.sortAmount) {
         filtered.sort((a, b) => Number(a.amount) - Number(b.amount));
       }
-      
+
       // Sort by date
       if (this.filters.sortDate) {
         filtered.sort((a, b) => {
           const dateA = dayjs(a.startDate, 'DD/MM/YYYY');
           const dateB = dayjs(b.startDate, 'DD/MM/YYYY');
-          
+
           if (this.filters.sortDate === 'asc') {
             return dateA.isBefore(dateB) ? -1 : dateA.isAfter(dateB) ? 1 : 0;
           } else if (this.filters.sortDate === 'desc') {
@@ -78,7 +78,7 @@ export default {
           return 0;
         });
       }
-      
+
       return filtered;
     }
   },
@@ -120,7 +120,7 @@ export default {
     editRecord(record) {
       this.loading = true;
       editRevenue(
-          record
+        record
       ).then(() => {
         this.$message.success('Cập nhật thành công');
         record.isEditing = false;
@@ -161,27 +161,27 @@ export default {
     loadData() {
       this.loading = true;
       getAllRevenue()
-          .then(res => {
-            if (res?.status === 200) {
-              this.dataSource = Object.entries(res?.data || {})
-                  .filter(([_, item]) => typeof item === 'object' && item !== null && item.userId === this.userId)
-                  .map(([id, item]) => ({
-                    ...item,
-                    key: id, // rất quan trọng
-                    isShowPass: false,
-                    isEditing: false,
-                  }));
-            } else {
-              this.$message.error(`Lỗi: ${res.status} - ${res.statusText}`);
-            }
-          })
-          .catch(err => {
-            this.$message.error('Lỗi khi tải dữ liệu');
-            console.error("Lỗi trong .catch:", err);
-          })
-          .finally(() => {
-            this.loading = false;
-          });
+        .then(res => {
+          if (res?.status === 200) {
+            this.dataSource = Object.entries(res?.data || {})
+              .filter(([_, item]) => typeof item === 'object' && item !== null && item.userId === this.userId)
+              .map(([id, item]) => ({
+                ...item,
+                key: id, // rất quan trọng
+                isShowPass: false,
+                isEditing: false,
+              }));
+          } else {
+            this.$message.error(`Lỗi: ${res.status} - ${res.statusText}`);
+          }
+        })
+        .catch(err => {
+          this.$message.error('Lỗi khi tải dữ liệu');
+          console.error("Lỗi trong .catch:", err);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
     resetFilters() {
       this.filters = {
@@ -190,57 +190,48 @@ export default {
         sortAmount: false,
         sortDate: null,
       };
+    },
+    formatAmount(value) {
+      if (!value) return '';
+      return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    },
+    onAmountInput(event, record) {
+      const rawValue = event.target.value.replace(/,/g, ''); // loại bỏ dấu phẩy
+      record.amount = rawValue;
     }
   }
 }
 </script>
 
 <template>
-  <Breadcrumb :breadcrumb="breadcrumb" title="Vay trả"/>
-  
+  <Breadcrumb :breadcrumb="breadcrumb" title="Vay trả" />
+
   <!-- Filter Section -->
   <div class="filter-section">
     <h3 class="filter-title">Lọc dữ liệu</h3>
     <a-row :gutter="16" align="middle">
       <a-col :span="6">
-        <a-input 
-          v-model:value="filters.name" 
-          placeholder="Tìm kiếm theo tên"
-          allow-clear
-        />
+        <a-input v-model:value="filters.name" placeholder="Tìm kiếm theo tên" allow-clear />
       </a-col>
       <a-col :span="6">
-        <a-select 
-          v-model:value="filters.tag" 
-          placeholder="Lọc theo tag"
-          style="width: 100%"
-          allow-clear
-        >
+        <a-select v-model:value="filters.tag" placeholder="Lọc theo tag" style="width: 100%" allow-clear>
           <a-select-option v-for="tag in tagOption" :key="tag.id" :value="tag.id">
             {{ tag.name }}
           </a-select-option>
         </a-select>
       </a-col>
       <a-col :span="6">
-        <a-switch 
-          v-model:checked="filters.sortAmount"
-          checked-children="Sắp xếp tiền tăng dần" 
-          un-checked-children="Không sắp xếp"
-        />
+        <a-switch v-model:checked="filters.sortAmount" checked-children="Sắp xếp tiền tăng dần"
+          un-checked-children="Không sắp xếp" />
       </a-col>
       <a-col :span="6">
-        <a-select 
-          v-model:value="filters.sortDate" 
-          placeholder="Sắp xếp ngày bắt đầu"
-          style="width: 100%"
-          allow-clear
-        >
+        <a-select v-model:value="filters.sortDate" placeholder="Sắp xếp ngày bắt đầu" style="width: 100%" allow-clear>
           <a-select-option value="asc">Ngày tăng dần</a-select-option>
           <a-select-option value="desc">Ngày giảm dần</a-select-option>
         </a-select>
       </a-col>
     </a-row>
-    
+
     <a-row justify="center" style="margin-top: 16px;">
       <a-col>
         <a-button @click="resetFilters" type="default">
@@ -256,21 +247,14 @@ export default {
       <div>Tổng tiền cho vay: <span class="value price-loan">{{ totalLoanAmount }} đ</span></div>
       <div>Tổng tiền nợ: <span class="value price">{{ totalDebtAmount }} đ</span></div>
     </div>
-    <a-button type="primary"
-              @click="addRecord">
+    <a-button type="primary" @click="addRecord">
       Thêm mới
     </a-button>
   </div>
   <div class="list-revenue">
 
-    <a-table
-        :columns="columns"
-        :data-source="filteredDataSource"
-        row-key="key"
-        bordered
-        :scroll="{ x: 'max-content' }"
-        :loading="loading"
-    >
+    <a-table :columns="columns" :data-source="filteredDataSource" row-key="key" bordered :scroll="{ x: 'max-content' }"
+      :loading="loading">
       <template #bodyCell="{ column, index, text, record }">
         <template v-if="column.dataIndex === 'index'">
           {{ index + 1 }}
@@ -278,50 +262,35 @@ export default {
         <template v-if="column.dataIndex === 'action'">
           <a-space style="display: flex; gap: 15px;">
             <a-tooltip :title="'Sửa'" v-if="!record.isEditing">
-              <a-button
-                  shape="circle"
-                  @click="handleEdit(record)"
-                  :icon="h( EditOutlined)"
-                  type="primary"
-              />
+              <a-button shape="circle" @click="handleEdit(record)" :icon="h(EditOutlined)" type="primary" />
             </a-tooltip>
             <a-tooltip title="Lưu" v-else>
-              <a-button
-                  shape="circle"
-                  @click="editRecord(record)"
-                  :icon="h( SaveOutlined )"
-                  type="primary"
-              />
+              <a-button shape="circle" @click="editRecord(record)" :icon="h(SaveOutlined)" type="primary" />
             </a-tooltip>
             <a-tooltip title="Xóa">
-              <a-button shape="circle" @click="deleteRecord(record)" :icon="h(DeleteOutlined)" type="primary" danger/>
+              <a-button shape="circle" @click="deleteRecord(record)" :icon="h(DeleteOutlined)" type="primary" danger />
             </a-tooltip>
           </a-space>
         </template>
         <template v-if="column.dataIndex === 'tag'">
           <template v-if="record.isEditing">
-            <a-select
-                v-model:value="record.tag"
-                style="width: 100%;"
-                placeholder="Chọn thẻ">
+            <a-select v-model:value="record.tag" style="width: 100%;" placeholder="Chọn thẻ">
               <a-select-option v-for="i in tagOption" :key="i.id" :value="i.id">
                 {{ i.name }}
               </a-select-option>
             </a-select>
           </template>
           <template v-else>
-             <span>
-          <a-tag
-              :color="text === 1 ? 'volcano' : text === 2 ? 'geekblue' : 'green'"
-          >
-            {{ tagOption[Number(text)]?.name.toUpperCase() }}
-          </a-tag>
-        </span>
+            <span>
+              <a-tag :color="text === 1 ? 'volcano' : text === 2 ? 'geekblue' : 'green'">
+                {{ tagOption[Number(text)]?.name.toUpperCase() }}
+              </a-tag>
+            </span>
           </template>
         </template>
         <template v-else-if="column.dataIndex === 'name'">
           <template v-if="record.isEditing">
-            <a-input v-model:value="record.name" placeholder="Nhập tên"/>
+            <a-input v-model:value="record.name" placeholder="Nhập tên" />
           </template>
           <template v-else>
             {{ text }}
@@ -329,7 +298,8 @@ export default {
         </template>
         <template v-else-if="column.dataIndex === 'amount'">
           <template v-if="record.isEditing">
-            <a-input v-model:value="record.amount" @keypress="isNumber" placeholder="Nhập giá tiền"/>
+            <a-input :value="formatAmount(record.amount)" @input="onAmountInput($event, record)" @keypress="isNumber"
+              placeholder="Nhập giá tiền" />
           </template>
           <template v-else>
             {{ Number(text).toLocaleString('en-US') }}
@@ -337,14 +307,8 @@ export default {
         </template>
         <template v-else-if="column.dataIndex === 'startDate'">
           <template v-if="record.isEditing">
-            <a-date-picker
-                v-model:value="record.startDate"
-                placeholder="DD/MM/YYYY"
-                format="DD/MM/YYYY"
-                value-format="DD/MM/YYYY"
-                style="width: 100%;"
-                :disabledDate="disabledFutureDates"
-            />
+            <a-date-picker v-model:value="record.startDate" placeholder="DD/MM/YYYY" format="DD/MM/YYYY"
+              value-format="DD/MM/YYYY" style="width: 100%;" :disabledDate="disabledFutureDates" />
           </template>
           <template v-else>
             {{ text }}
@@ -352,14 +316,8 @@ export default {
         </template>
         <template v-else-if="column.dataIndex === 'endDate'">
           <template v-if="record.isEditing">
-            <a-date-picker
-                v-model:value="record.endDate"
-                placeholder="DD/MM/YYYY"
-                format="DD/MM/YYYY"
-                value-format="DD/MM/YYYY"
-                style="width: 100%;"
-                :disabledDate="disabledPastDates"
-            />
+            <a-date-picker v-model:value="record.endDate" placeholder="DD/MM/YYYY" format="DD/MM/YYYY"
+              value-format="DD/MM/YYYY" style="width: 100%;" :disabledDate="disabledPastDates" />
           </template>
           <template v-else>
             {{ text }}
@@ -367,7 +325,7 @@ export default {
         </template>
         <template v-else-if="column.dataIndex === 'note'">
           <template v-if="record.isEditing">
-            <a-input v-model:value="record.note" placeholder="Nhập mô tả"/>
+            <a-input v-model:value="record.note" placeholder="Nhập mô tả" />
           </template>
           <template v-else>
             {{ text }}
@@ -384,11 +342,13 @@ svg {
   color: #1890ff;
   cursor: pointer;
 }
-.filter-title{
+
+.filter-title {
   text-align: left;
   margin-bottom: 10px;
   font-weight: bold;
 }
+
 .filter-section {
   margin-bottom: 20px;
   padding: 16px;
