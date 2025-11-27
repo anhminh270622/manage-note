@@ -46,7 +46,7 @@ export default {
       isLogin: false,
     };
   },
-  mounted() {
+  created() {
     this.isLogin = localStorage.getItem("isLogin");
   }
 }

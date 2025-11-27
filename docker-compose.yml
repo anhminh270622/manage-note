@@ -1,0 +1,9 @@
+version: "3.8"
+
+services:
+  fe-app:
+    build: .
+    image: manage-note:latest
+    ports:
+      - "3000:80"   # Truy cập FE tại http://localhost:3000
+    restart: unless-stopped
