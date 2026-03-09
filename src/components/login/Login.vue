@@ -73,12 +73,10 @@ export default {
         this.otpCooldown -= 1;
       }, 1000);
     },
-    setupRecaptcha() {
-      if (this.recaptchaVerifier) {
-        this.recaptchaVerifier.clear();
-        this.recaptchaVerifier = null;
-      }
+    async setupRecaptcha() {
+      if (this.recaptchaVerifier) return;
       this.recaptchaVerifier = createPhoneRecaptcha("recaptcha-container");
+      await this.recaptchaVerifier.render();
     },
     async onSendOtp() {
       if (!isFirebaseAuthConfigured()) {
@@ -95,7 +93,7 @@ export default {
 
       this.isLoading = true;
       try {
-        this.setupRecaptcha();
+        await this.setupRecaptcha();
         this.confirmationResult = await sendPhoneOtp(phoneE164, this.recaptchaVerifier);
         this.lastPhoneE164 = phoneE164;
         this.startOtpCooldown();
