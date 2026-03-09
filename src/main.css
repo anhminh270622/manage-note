@@ -2,23 +2,19 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Arial', sans-serif;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 
 body {
-    background: #cccccc;
+    background: #f1f5f9;
+    color: #0f172a;
 }
 
 html {
     height: 100%;
-    color: black !important;
-
+    color: #0f172a !important;
 }
 
 ul {
     list-style: none;
-}
-
-td.ant-table-cell {
-    padding: 5px 16px !important;
 }

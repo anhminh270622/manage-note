@@ -1,7 +1,7 @@
 <template>
-  <a-breadcrumb>
-    <a-breadcrumb-item v-for="i in breadcrumb">
-      <a :href="i.link" v-if="i.link" style="cursor: pointer;">{{ i.name }}</a>
+  <a-breadcrumb class="breadcrumb-wrap">
+    <a-breadcrumb-item v-for="i in breadcrumb" :key="`${i.name}-${i.link || i.path || 'current'}`">
+      <RouterLink :to="i.link || i.path" v-if="i.link || i.path" class="crumb-link">{{ i.name }}</RouterLink>
       <span v-else>{{ i.name }}</span>
     </a-breadcrumb-item>
   </a-breadcrumb>
@@ -9,12 +9,17 @@
 </template>
 
 <script>
+import { RouterLink } from "vue-router";
 
 export default {
   name: 'Breadcrumb',
+  components: {
+    RouterLink,
+  },
   props: {
     breadcrumb: {
-      type: Object,
+      type: Array,
+      default: () => [],
     },
     title: {
       type: String,
@@ -28,16 +33,27 @@ export default {
 
 </script>
 <style scoped>
-a, span{
+.breadcrumb-wrap {
+  margin-bottom: 4px;
+}
+
+.crumb-link,
+span {
   font-size: 12px;
 }
-h3 {
+
+.crumb-link {
+  color: #64748b;
+}
+
+.breadcrumb-title {
   margin: 0;
-  padding: 10px 0;
-  font-size: 1.2rem;
-  color: #333;
+  padding: 8px 0 14px;
+  font-size: 1.45rem;
+  color: #0f172a;
   text-align: left;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 </style>

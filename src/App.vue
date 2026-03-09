@@ -1,12 +1,12 @@
 <template>
   <a-config-provider :theme="theme">
-    <div v-if="isLogin">
+    <div v-if="showMainLayout">
       <a-layout>
         <a-layout-header class="layout-header">
           <Header/>
         </a-layout-header>
         <a-layout>
-          <a-layout-sider class="layout-sider">
+          <a-layout-sider class="layout-sider" :width="240">
             <SideBar/>
           </a-layout-sider>
           <a-layout-content class="layout-content">
@@ -30,24 +30,25 @@ import SideBar from "@/components/sidebar/SideBar.vue";
 import { RouterView } from "vue-router";
 import "./main.css"
 import theme from "@/themeConfig.js";
-import Login from "@/components/login/Login.vue";
 
 export default {
   name: "App",
   components: {
-    Login,
     Header,
     SideBar,
     RouterView
   },
   data() {
     return {
-      theme,
-      isLogin: false,
+      theme
     };
   },
-  created() {
-    this.isLogin = localStorage.getItem("isLogin");
+  computed: {
+    showMainLayout() {
+      const isLoggedIn = localStorage.getItem("isLogin") === "true";
+      const isAuthRoute = this.$route?.meta?.requiresAuth !== false;
+      return isLoggedIn && isAuthRoute;
+    }
   }
 }
 </script>
@@ -55,32 +56,37 @@ export default {
 <style scoped>
 .layout-header {
   position: fixed;
-  z-index: 1;
+  z-index: 10;
   right: 0;
   left: 0;
   text-align: center;
   height: 64px;
-  padding-inline: 50px;
+  padding-inline: 24px;
   line-height: 64px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 21, 41, 0.2);
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .layout-content {
-  margin: 84px 20px 20px 20px;
-  text-align: center;
-  height: calc(100vh - 104px);
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 21, 41, 0.2);
-  padding: 10px;
+  margin: 80px 20px 20px 16px;
+  text-align: left;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  border-radius: 14px;
+  padding: 16px;
+  overflow: auto;
 }
 
 .layout-sider {
-  margin-top: 84px;
+  margin-top: 80px;
   text-align: center;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 21, 41, 0.2);
-
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  min-height: calc(100vh - 80px);
+  box-shadow: 8px 0 24px rgba(15, 23, 42, 0.04);
 }
 
 </style>

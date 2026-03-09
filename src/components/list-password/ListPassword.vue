@@ -1,83 +1,85 @@
 <template>
-  <Breadcrumb :breadcrumb="breadcrumb" title="Danh sách mật khẩu" />
-  <div class="add-password">
-    <div class="info-table">
-      <div>Tổng số bản ghi: <span class="value">{{ dataSource.length }}</span></div>
+  <div class="page-password">
+    <Breadcrumb :breadcrumb="breadcrumb" title="Danh sách mật khẩu" />
+    <div class="add-password">
+      <div class="info-table">
+        <div>Tổng số bản ghi: <span class="value">{{ dataSource.length }}</span></div>
+      </div>
+      <a-button type="primary" @click="addRecord" class="btn-add">
+        Thêm mới
+      </a-button>
     </div>
-    <a-button type="primary" @click="addRecord">
-      Thêm mới
-    </a-button>
-  </div>
-  <div class="list-password">
-    <a-table :columns="columns" :data-source="dataSource" row-key="key" bordered :scroll="{ x: 'max-content' }"
-      :loading="loading">
-      <template #bodyCell="{ column, index, text, record }">
-        <template v-if="column.dataIndex === 'index'">
-          {{ index + 1 }}
-        </template>
-        <template v-if="column.dataIndex === 'action'">
-          <a-space style="display: flex; gap: 15px;">
-            <a-tooltip :title="'Sửa'" v-if="!record.isEditing">
-              <a-button shape="circle" @click="handleEdit(record)" :icon="h(EditOutlined)" type="primary" />
-            </a-tooltip>
-            <a-tooltip title="Lưu" v-else>
-              <a-button shape="circle" @click="editRecord(record)" :icon="h(SaveOutlined)" type="primary" />
-            </a-tooltip>
-            <a-tooltip title="Xóa">
-              <a-button shape="circle" @click="deleteRecord(record)" :icon="h(DeleteOutlined)" type="primary" danger />
-            </a-tooltip>
-            <a-tooltip title="Xem mật khẩu">
-              <a-button @click="togglePasswordVisibility(record)" shape="circle" :icon="h(EyeInvisibleOutlined)" />
-            </a-tooltip>
-          </a-space>
-        </template>
-        <template v-else-if="column.dataIndex === 'name'">
-          <template v-if="record.isEditing">
-            <a-input v-model:value="record.name" placeholder="Nhập tên"
-              @blur="(event) => (record.name = event.target.value.trim())" />
+    <div class="list-password">
+      <a-table :columns="columns" :data-source="dataSource" row-key="key" bordered :scroll="{ x: 'max-content' }"
+        :loading="loading" class="password-table">
+        <template #bodyCell="{ column, index, text, record }">
+          <template v-if="column.dataIndex === 'index'">
+            {{ index + 1 }}
           </template>
-          <template v-else>
-            {{ text }}
+          <template v-if="column.dataIndex === 'action'">
+            <a-space class="action-group">
+              <a-tooltip :title="'Sửa'" v-if="!record.isEditing">
+                <a-button shape="circle" @click="handleEdit(record)" :icon="h(EditOutlined)" type="primary" />
+              </a-tooltip>
+              <a-tooltip title="Lưu" v-else>
+                <a-button shape="circle" @click="editRecord(record)" :icon="h(SaveOutlined)" type="primary" />
+              </a-tooltip>
+              <a-tooltip title="Xóa">
+                <a-button shape="circle" @click="deleteRecord(record)" :icon="h(DeleteOutlined)" type="primary" danger />
+              </a-tooltip>
+              <a-tooltip title="Xem mật khẩu">
+                <a-button @click="togglePasswordVisibility(record)" shape="circle" :icon="h(EyeInvisibleOutlined)" />
+              </a-tooltip>
+            </a-space>
           </template>
-        </template>
-        <template v-else-if="column.dataIndex === 'username'">
-          <template v-if="record.isEditing">
-            <a-input v-model:value="record.username" placeholder="Nhập tên đăng nhập"
-              @blur="(event) => (record.username = event.target.value.trim())" />
+          <template v-else-if="column.dataIndex === 'name'">
+            <template v-if="record.isEditing">
+              <a-input v-model:value="record.name" placeholder="Nhập tên"
+                @blur="(event) => (record.name = event.target.value.trim())" />
+            </template>
+            <template v-else>
+              {{ text }}
+            </template>
           </template>
-          <template v-else>
-            {{ text }}
+          <template v-else-if="column.dataIndex === 'username'">
+            <template v-if="record.isEditing">
+              <a-input v-model:value="record.username" placeholder="Nhập tên đăng nhập"
+                @blur="(event) => (record.username = event.target.value.trim())" />
+            </template>
+            <template v-else>
+              {{ text }}
+            </template>
           </template>
-        </template>
-        <template v-else-if="column.dataIndex === 'phone'">
-          <template v-if="record.isEditing">
-            <a-input :maxlength="10" v-model:value="record.phone" placeholder="Nhập số điện thoại"
-              @input="handlePhoneInput" @blur="(event) => (record.phone = event.target.value.trim())" />
+          <template v-else-if="column.dataIndex === 'phone'">
+            <template v-if="record.isEditing">
+              <a-input :maxlength="10" v-model:value="record.phone" placeholder="Nhập số điện thoại"
+                @input="handlePhoneInput" @blur="(event) => (record.phone = event.target.value.trim())" />
+            </template>
+            <template v-else>
+              {{ text }}
+            </template>
           </template>
-          <template v-else>
-            {{ text }}
+          <template v-else-if="column.dataIndex === 'password'">
+            <template v-if="record.isEditing">
+              <a-input v-model:value="record.password" placeholder="Nhập mật khẩu"
+                @blur="(event) => (record.password = event.target.value.trim())" />
+            </template>
+            <template v-else>
+              <span>{{ record.isShowPass ? text : '*****' }}</span>
+            </template>
           </template>
-        </template>
-        <template v-else-if="column.dataIndex === 'password'">
-          <template v-if="record.isEditing">
-            <a-input v-model:value="record.password" placeholder="Nhập mật khẩu"
-              @blur="(event) => (record.password = event.target.value.trim())" />
-          </template>
-          <template v-else>
-            <span>{{ record.isShowPass ? text : '*****' }}</span>
-          </template>
-        </template>
-        <template v-else-if="column.dataIndex === 'email'">
-          <template v-if="record.isEditing">
-            <a-input v-model:value="record.email" placeholder="Nhập email"
-              @blur="(event) => (record.email = event.target.value.trim())" />
-          </template>
-          <template v-else>
-            {{ text }}
+          <template v-else-if="column.dataIndex === 'email'">
+            <template v-if="record.isEditing">
+              <a-input v-model:value="record.email" placeholder="Nhập email"
+                @blur="(event) => (record.email = event.target.value.trim())" />
+            </template>
+            <template v-else>
+              {{ text }}
+            </template>
           </template>
         </template>
-      </template>
-    </a-table>
+      </a-table>
+    </div>
   </div>
 </template>
 
@@ -223,29 +225,80 @@ export default {
 }
 </script>
 <style scoped>
-svg {
-  font-size: 20px;
-  color: #1890ff;
-  cursor: pointer;
+.page-password {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  padding: 14px;
 }
 
 .add-password {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
 }
 
 .info-table {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  flex-direction: column;
-  align-items: start;
-  gap: 10px;
+  align-items: center;
+  color: #475569;
+  font-size: 14px;
 }
 
 .value {
-  font-weight: bold;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #0f172a;
+  margin-left: 6px;
+}
+
+.btn-add {
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+}
+
+.list-password {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.action-group {
+  display: flex;
+  gap: 10px;
+}
+
+.password-table :deep(.ant-table-container) {
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+
+.password-table :deep(.ant-table-thead > tr > th) {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+}
+
+.password-table :deep(.ant-table-tbody > tr > td) {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.password-table :deep(.ant-table-cell) {
+  border-color: #eef2f7 !important;
+}
+
+.password-table :deep(.ant-pagination-item-active) {
+  border-color: #2563eb;
+}
+
+.password-table :deep(.ant-pagination-item-active a) {
+  color: #2563eb;
 }
 </style>

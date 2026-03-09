@@ -143,9 +143,23 @@ export default {
         userId: this.userId,
         tag: 0, // Mặc định là cho vay
       }
-      addRevenue(params).then(() => {
+      addRevenue(params).then((res) => {
         this.$message.success('Thêm mới thành công');
-        this.loadData()
+        const firebaseKey = res?.data?.name;
+        if (!firebaseKey) {
+          this.loadData();
+          return;
+        }
+
+        // Giữ row mới ở trạng thái chỉnh sửa để nhập liệu ngay.
+        this.dataSource = [
+          {
+            ...params,
+            key: firebaseKey,
+            isEditing: true,
+          },
+          ...this.dataSource,
+        ];
       }).catch(() => {
         this.$message.error('Lỗi khi thêm mới');
       }).finally(() => {
@@ -204,58 +218,57 @@ export default {
 </script>
 
 <template>
-  <Breadcrumb :breadcrumb="breadcrumb" title="Vay trả" />
+  <div class="page-revenue">
+    <Breadcrumb :breadcrumb="breadcrumb" title="Vay trả" />
 
-  <!-- Filter Section -->
-  <div class="filter-section">
-    <h3 class="filter-title">Lọc dữ liệu</h3>
-    <a-row :gutter="16" align="middle">
-      <a-col :span="6">
-        <a-input v-model:value="filters.name" placeholder="Tìm kiếm theo tên" allow-clear />
-      </a-col>
-      <a-col :span="6">
-        <a-select v-model:value="filters.tag" placeholder="Lọc theo tag" style="width: 100%" allow-clear>
-          <a-select-option v-for="tag in tagOption" :key="tag.id" :value="tag.id">
-            {{ tag.name }}
-          </a-select-option>
-        </a-select>
-      </a-col>
-      <a-col :span="6">
-        <a-switch v-model:checked="filters.sortAmount" checked-children="Sắp xếp tiền tăng dần"
-          un-checked-children="Không sắp xếp" />
-      </a-col>
-      <a-col :span="6">
-        <a-select v-model:value="filters.sortDate" placeholder="Sắp xếp ngày bắt đầu" style="width: 100%" allow-clear>
-          <a-select-option value="asc">Ngày tăng dần</a-select-option>
-          <a-select-option value="desc">Ngày giảm dần</a-select-option>
-        </a-select>
-      </a-col>
-    </a-row>
+    <div class="filter-section">
+      <h3 class="filter-title">Lọc dữ liệu</h3>
+      <a-row :gutter="16" align="middle">
+        <a-col :span="6">
+          <a-input v-model:value="filters.name" placeholder="Tìm kiếm theo tên" allow-clear />
+        </a-col>
+        <a-col :span="6">
+          <a-select v-model:value="filters.tag" placeholder="Lọc theo tag" style="width: 100%" allow-clear>
+            <a-select-option v-for="tag in tagOption" :key="tag.id" :value="tag.id">
+              {{ tag.name }}
+            </a-select-option>
+          </a-select>
+        </a-col>
+        <a-col :span="6">
+          <a-switch v-model:checked="filters.sortAmount" checked-children="Sắp xếp tiền tăng dần"
+            un-checked-children="Không sắp xếp" />
+        </a-col>
+        <a-col :span="6">
+          <a-select v-model:value="filters.sortDate" placeholder="Sắp xếp ngày bắt đầu" style="width: 100%" allow-clear>
+            <a-select-option value="asc">Ngày tăng dần</a-select-option>
+            <a-select-option value="desc">Ngày giảm dần</a-select-option>
+          </a-select>
+        </a-col>
+      </a-row>
 
-    <a-row justify="center" style="margin-top: 16px;">
-      <a-col>
-        <a-button @click="resetFilters" type="default">
-          Xóa bộ lọc
-        </a-button>
-      </a-col>
-    </a-row>
-  </div>
-
-  <div class="add-revenue">
-    <div class="info-table">
-      <div>Tổng số bản ghi: <span class="value">{{ filteredDataSource.length }}</span></div>
-      <div>Tổng tiền cho vay: <span class="value price-loan">{{ totalLoanAmount }} đ</span></div>
-      <div>Tổng tiền nợ: <span class="value price">{{ totalDebtAmount }} đ</span></div>
+      <a-row justify="center" style="margin-top: 16px;">
+        <a-col>
+          <a-button @click="resetFilters" type="default">
+            Xóa bộ lọc
+          </a-button>
+        </a-col>
+      </a-row>
     </div>
-    <a-button type="primary" @click="addRecord">
-      Thêm mới
-    </a-button>
-  </div>
-  <div class="list-revenue">
 
-    <a-table :columns="columns" :data-source="filteredDataSource" row-key="key" bordered :scroll="{ x: 'max-content' }"
-      :loading="loading">
-      <template #bodyCell="{ column, index, text, record }">
+    <div class="add-revenue">
+      <div class="info-table">
+        <div>Tổng số bản ghi: <span class="value">{{ filteredDataSource.length }}</span></div>
+        <div>Tổng tiền cho vay: <span class="value price-loan">{{ totalLoanAmount }} đ</span></div>
+        <div>Tổng tiền nợ: <span class="value price">{{ totalDebtAmount }} đ</span></div>
+      </div>
+      <a-button type="primary" @click="addRecord" class="btn-add">
+        Thêm mới
+      </a-button>
+    </div>
+    <div class="list-revenue">
+      <a-table :columns="columns" :data-source="filteredDataSource" row-key="key" bordered :scroll="{ x: 'max-content' }"
+        :loading="loading" class="revenue-table">
+        <template #bodyCell="{ column, index, text, record }">
         <template v-if="column.dataIndex === 'index'">
           {{ index + 1 }}
         </template>
@@ -331,57 +344,91 @@ export default {
             {{ text }}
           </template>
         </template>
-      </template>
-    </a-table>
+        </template>
+      </a-table>
+    </div>
   </div>
 </template>
 
 <style scoped>
-svg {
-  font-size: 20px;
-  color: #1890ff;
-  cursor: pointer;
+.page-revenue {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  padding: 14px;
 }
 
 .filter-title {
   text-align: left;
-  margin-bottom: 10px;
-  font-weight: bold;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .filter-section {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   padding: 16px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  border: 1px solid #d9d9d9;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
 }
 
 .add-revenue {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px 14px;
 }
 
 .info-table {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
   flex-direction: column;
   align-items: start;
-  gap: 10px;
+  gap: 8px;
+  color: #475569;
 }
 
 .value {
-  font-weight: bold;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 17px;
 }
 
 .price {
-  color: red;
+  color: #ef4444;
 }
 
 .price-loan {
-  color: green;
+  color: #16a34a;
+}
+
+.btn-add {
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+}
+
+.list-revenue {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.revenue-table :deep(.ant-table-container) {
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+
+.revenue-table :deep(.ant-table-thead > tr > th) {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+}
+
+.revenue-table :deep(.ant-table-cell) {
+  border-color: #eef2f7 !important;
 }
 </style>

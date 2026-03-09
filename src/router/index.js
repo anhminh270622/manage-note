@@ -58,6 +58,10 @@ router.beforeEach((to, from, next) => {
     const isLoggedIn = !!localStorage.getItem('isLogin'); // hoặc kiểm tra token, trạng thái từ pinia
 
     if (to.meta.requiresAuth === false) {
+        if (isLoggedIn && (to.path === '/login' || to.path === '/register')) {
+            next('/');
+            return;
+        }
         next();
     } else if (!isLoggedIn) {
         next('/login');
