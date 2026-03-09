@@ -22,16 +22,24 @@ export default {
       this.$router.push('/');
     },
     async onLogout() {
-      try {
-        await logoutFirebaseAuth();
-      } catch (error) {
-        // Bỏ qua lỗi signOut để vẫn dọn session local.
-      }
-      localStorage.removeItem('isLogin');
-      localStorage.removeItem('user');
-      this.isLogin = false;
-      this.$message.success('Đăng xuất thành công!');
-      this.$router.push('/login');
+      this.$confirm({
+        title: "Xác nhận đăng xuất",
+        content: "Bạn có chắc chắn muốn đăng xuất không?",
+        okText: "Đăng xuất",
+        cancelText: "Hủy",
+        onOk: async () => {
+          try {
+            await logoutFirebaseAuth();
+          } catch (error) {
+            // Bỏ qua lỗi signOut để vẫn dọn session local.
+          }
+          localStorage.removeItem('isLogin');
+          localStorage.removeItem('user');
+          this.isLogin = false;
+          this.$message.success('Đăng xuất thành công!');
+          this.$router.push('/login');
+        },
+      });
     }
   }
 }

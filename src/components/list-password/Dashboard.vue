@@ -32,13 +32,53 @@ export default {
     SaveOutlined,
     EditOutlined,
     h,
+    getRandomHexColor() {
+      const value = Math.floor(Math.random() * 0xffffff);
+      return `#${value.toString(16).padStart(6, "0")}`;
+    },
+    getUniqueBoxColor() {
+      const usedColors = new Set(
+        (this.dataBox || [])
+          .map((item) => item?.color?.toLowerCase())
+          .filter(Boolean)
+      );
+
+      const palette = [
+        "#6ebcd9",
+        "#7cc4a5",
+        "#7caad9",
+        "#9a86db",
+        "#d98db3",
+        "#d9a66e",
+        "#66b3a6",
+        "#4f86f7",
+        "#6cc36c",
+        "#f59e0b",
+        "#ef4444",
+        "#8b5cf6",
+      ];
+
+      const availablePalette = palette.filter((color) => !usedColors.has(color.toLowerCase()));
+      if (availablePalette.length > 0) {
+        return availablePalette[Math.floor(Math.random() * availablePalette.length)];
+      }
+
+      for (let index = 0; index < 30; index += 1) {
+        const color = this.getRandomHexColor();
+        if (!usedColors.has(color.toLowerCase())) {
+          return color;
+        }
+      }
+
+      return this.getRandomHexColor();
+    },
     onNextPage(type) {
       this.$router.push({ path: `/list-password/${type}` });
     },
     addNewBox() {
       this.isOpenModal = true;
       this.formItem.name = "";
-      this.formItem.color = "#6ebcd9";
+      this.formItem.color = this.getUniqueBoxColor();
     },
     handleOk() {
       this.$refs.formRef.validate()

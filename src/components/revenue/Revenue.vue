@@ -23,7 +23,10 @@ export default {
       filters: {
         name: '',
         tag: null,
-        sortAmount: false, // false: không sắp xếp, true: sắp xếp từ bé đến lớn
+        amountMin: 0,
+        amountMax: null,
+        startDateRange: [],
+        sortAmount: null, // null: không sắp xếp, 'asc' | 'desc'
         sortDate: null, // null: không sắp xếp, 'asc': tăng dần, 'desc': giảm dần
       }
     };
@@ -44,13 +47,38 @@ export default {
         .reduce((total, item) => total + (Number(item.amount) || 0), 0);
       return total > 0 ? total.toLocaleString('en-US') : '0';
     },
+    amountSliderMax() {
+      const maxAmount = Math.max(
+        ...this.dataSource.map((item) => Number(item.amount) || 0),
+        0
+      );
+      if (maxAmount <= 0) return 1000000;
+      const step = 100000;
+      return Math.ceil(maxAmount / step) * step;
+    },
+    amountRangeModel: {
+      get() {
+        const min = this.filters.amountMin ?? 0;
+        const max = this.filters.amountMax ?? this.amountSliderMax;
+        return [
+          Math.min(Math.max(min, 0), this.amountSliderMax),
+          Math.min(Math.max(max, 0), this.amountSliderMax),
+        ];
+      },
+      set(value) {
+        if (!Array.isArray(value) || value.length !== 2) return;
+        this.filters.amountMin = value[0];
+        this.filters.amountMax = value[1];
+      }
+    },
     filteredDataSource() {
       let filtered = [...this.dataSource];
 
       // Filter by name
       if (this.filters.name) {
+        const keyword = this.filters.name.toLowerCase().trim();
         filtered = filtered.filter(item =>
-          item.name.toLowerCase().includes(this.filters.name.toLowerCase())
+          String(item.name || "").toLowerCase().includes(keyword)
         );
       }
 
@@ -59,9 +87,38 @@ export default {
         filtered = filtered.filter(item => item.tag === this.filters.tag);
       }
 
+      // Filter by amount range
+      const min = this.filters.amountMin !== null && this.filters.amountMin !== "" ? Number(this.filters.amountMin) : null;
+      const max = this.filters.amountMax !== null && this.filters.amountMax !== "" ? Number(this.filters.amountMax) : null;
+      if (min !== null && !Number.isNaN(min)) {
+        filtered = filtered.filter(item => Number(item.amount || 0) >= min);
+      }
+      if (max !== null && !Number.isNaN(max)) {
+        filtered = filtered.filter(item => Number(item.amount || 0) <= max);
+      }
+
+      // Filter by start date range
+      if (Array.isArray(this.filters.startDateRange) && this.filters.startDateRange.length === 2) {
+        const [fromDate, toDate] = this.filters.startDateRange;
+        const from = dayjs(fromDate, 'DD/MM/YYYY');
+        const to = dayjs(toDate, 'DD/MM/YYYY');
+        if (from.isValid() && to.isValid()) {
+          filtered = filtered.filter((item) => {
+            const start = dayjs(item.startDate, 'DD/MM/YYYY');
+            return start.isValid() && !start.isBefore(from, 'day') && !start.isAfter(to, 'day');
+          });
+        }
+      }
+
       // Sort by amount
       if (this.filters.sortAmount) {
-        filtered.sort((a, b) => Number(a.amount) - Number(b.amount));
+        filtered.sort((a, b) => {
+          const amountA = Number(a.amount) || 0;
+          const amountB = Number(b.amount) || 0;
+          if (this.filters.sortAmount === 'asc') return amountA - amountB;
+          if (this.filters.sortAmount === 'desc') return amountB - amountA;
+          return 0;
+        });
       }
 
       // Sort by date
@@ -132,11 +189,12 @@ export default {
     },
     addRecord() {
       this.loading = true;
+      const today = dayjs().format('DD/MM/YYYY');
       const params = {
         key: Date.now(),
         name: '',
         amount: 0,
-        startDate: '',
+        startDate: today,
         endDate: '',
         note: '',
         isEditing: true,
@@ -201,7 +259,10 @@ export default {
       this.filters = {
         name: '',
         tag: null,
-        sortAmount: false,
+        amountMin: 0,
+        amountMax: null,
+        startDateRange: [],
+        sortAmount: null,
         sortDate: null,
       };
     },
@@ -235,14 +296,39 @@ export default {
           </a-select>
         </a-col>
         <a-col :span="6">
-          <a-switch v-model:checked="filters.sortAmount" checked-children="Sắp xếp tiền tăng dần"
-            un-checked-children="Không sắp xếp" />
+          <a-select v-model:value="filters.sortAmount" placeholder="Sắp xếp theo tiền" style="width: 100%" allow-clear>
+            <a-select-option value="asc">Tiền tăng dần</a-select-option>
+            <a-select-option value="desc">Tiền giảm dần</a-select-option>
+          </a-select>
         </a-col>
         <a-col :span="6">
           <a-select v-model:value="filters.sortDate" placeholder="Sắp xếp ngày bắt đầu" style="width: 100%" allow-clear>
             <a-select-option value="asc">Ngày tăng dần</a-select-option>
             <a-select-option value="desc">Ngày giảm dần</a-select-option>
           </a-select>
+        </a-col>
+      </a-row>
+      <a-row :gutter="16" align="middle" style="margin-top: 12px;">
+        <a-col :span="12" class="amount-slider-wrap">
+          <div class="amount-slider-label">
+            Khoảng tiền:
+            <span>{{ amountRangeModel[0].toLocaleString('en-US') }} đ - {{ amountRangeModel[1].toLocaleString('en-US') }} đ</span>
+          </div>
+          <a-slider
+            v-model:value="amountRangeModel"
+            range
+            :min="0"
+            :max="amountSliderMax"
+            :step="50000"
+          />
+        </a-col>
+        <a-col :span="12">
+          <a-range-picker
+            v-model:value="filters.startDateRange"
+            format="DD/MM/YYYY"
+            value-format="DD/MM/YYYY"
+            style="width: 100%;"
+          />
         </a-col>
       </a-row>
 
@@ -371,6 +457,22 @@ export default {
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
+}
+
+.amount-slider-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.amount-slider-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.amount-slider-label span {
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .add-revenue {

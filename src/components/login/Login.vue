@@ -46,6 +46,21 @@ export default {
     },
   },
   methods: {
+    async handleSubmit() {
+      try {
+        if (this.activeTab === "email") {
+          await this.$refs.loginForm.validate(["email", "password"]);
+        } else {
+          await this.$refs.loginForm.validate(["phone", "otp"]);
+        }
+        await this.onFinish({ ...this.formState });
+      } catch (error) {
+        if (error?.errorFields) {
+          return;
+        }
+        this.$message.error("Không thể gửi form, vui lòng thử lại.");
+      }
+    },
     normalizePhoneE164(rawPhone) {
       if (!rawPhone) return "";
       let phone = String(rawPhone).trim().replace(/\s+/g, "");
@@ -133,6 +148,7 @@ export default {
       this.$router.push({ path: "/" });
     },
     async loginByPhone(values) {
+      console.log("⛷️⛷️⛷️ ~ values:", values)
       if (!this.confirmationResult) {
         this.$message.error("Vui lòng gửi OTP trước.");
         return;
@@ -209,15 +225,7 @@ export default {
 <template>
   <a-spin :spinning="isLoading">
     <div class="auth-page">
-      <a-form
-        :model="formState"
-        name="basic"
-        layout="vertical"
-        autocomplete="off"
-        @finish="onFinish"
-        class="login-form"
-        ref="loginForm"
-      >
+      <a-form :model="formState" name="basic" layout="vertical" autocomplete="off" class="login-form" ref="loginForm">
         <h2>Đăng nhập</h2>
         <p class="subtitle">Hỗ trợ Email/Password và OTP qua số điện thoại.</p>
 
@@ -271,7 +279,7 @@ export default {
           Chưa có tài khoản? <RouterLink to="/register">Đăng ký ngay</RouterLink>
         </a-form-item>
         <a-form-item class="login-button">
-          <a-button type="primary" html-type="submit" block>
+          <a-button type="primary" html-type="button" @click="handleSubmit" block>
             {{ activeTab === "email" ? "Đăng nhập" : "Xác thực OTP" }}
           </a-button>
         </a-form-item>
