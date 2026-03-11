@@ -5,6 +5,7 @@ import Breadcrumb from "@/components/breadcrumb/Breadcrumb.vue";
 import { addBox, deleteBox, editBox, getAllBox } from "@/api/password.js";
 import { h } from "vue";
 import { DeleteOutlined, EditOutlined, SaveOutlined } from "@ant-design/icons-vue";
+import { addActivityLog } from "@/utils/activityLog.js";
 
 export default {
   name: 'DashboardPassword',
@@ -93,6 +94,11 @@ export default {
           };
           addBox(newBox).then(res => {
             this.$message.success('Thêm mới thành công');
+            addActivityLog({
+              action: "add_password_box",
+              module: "password_box",
+              detail: `Thêm danh mục "${newBox.name}"`,
+            });
             this.isOpenModal = false;
             this.loadData();
           }).catch(() => {
@@ -136,6 +142,11 @@ export default {
           this.isLoading = true;
           deleteBox(record.id).then(() => {
             this.$message.success('Xóa thành công');
+            addActivityLog({
+              action: "delete_password_box",
+              module: "password_box",
+              detail: `Xóa danh mục "${record.name || "không tên"}"`,
+            });
             this.loadData();
           }).catch(() => {
             this.$message.error('Lỗi khi xóa');
@@ -158,6 +169,11 @@ export default {
       this.isLoading = true;
       editBox(record).then(() => {
         this.$message.success('Cập nhật thành công');
+        addActivityLog({
+          action: "edit_password_box",
+          module: "password_box",
+          detail: `Cập nhật danh mục "${record.name || "không tên"}"`,
+        });
         record.isEditing = false;
         this.loadData();
       }).catch(() => {
@@ -346,5 +362,28 @@ svg {
 .box:hover .action {
   opacity: 1;
   visibility: visible;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .btn-add {
+    width: 100%;
+  }
+
+  .box-container {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .box {
+    width: 100%;
+    max-width: 280px;
+    margin: 8px 0;
+  }
 }
 </style>

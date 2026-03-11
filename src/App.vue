@@ -5,7 +5,7 @@
         <a-layout-header class="layout-header">
           <Header/>
         </a-layout-header>
-        <a-layout>
+        <a-layout v-if="!isMobile">
           <a-layout-sider class="layout-sider" :width="240">
             <SideBar/>
           </a-layout-sider>
@@ -15,6 +15,16 @@
             </main>
           </a-layout-content>
         </a-layout>
+        <div v-else class="mobile-main">
+          <div class="mobile-sider">
+            <SideBar/>
+          </div>
+          <a-layout-content class="layout-content mobile-content">
+            <main>
+              <RouterView/>
+            </main>
+          </a-layout-content>
+        </div>
       </a-layout>
     </div>
     <div v-else>
@@ -40,8 +50,16 @@ export default {
   },
   data() {
     return {
-      theme
+      theme,
+      isMobile: false,
     };
+  },
+  mounted() {
+    this.updateViewport();
+    window.addEventListener("resize", this.updateViewport);
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.updateViewport);
   },
   computed: {
     showMainLayout() {
@@ -49,6 +67,11 @@ export default {
       const isAuthRoute = this.$route?.meta?.requiresAuth !== false;
       return isLoggedIn && isAuthRoute;
     }
+  },
+  methods: {
+    updateViewport() {
+      this.isMobile = window.innerWidth <= 992;
+    },
   }
 }
 </script>
@@ -89,4 +112,40 @@ export default {
   box-shadow: 8px 0 24px rgba(15, 23, 42, 0.04);
 }
 
+.mobile-main {
+  margin-top: 64px;
+}
+
+.mobile-sider {
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+@media (max-width: 992px) {
+  .layout-content {
+    margin: 12px;
+    min-height: calc(100vh - 140px);
+    width: auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-header {
+    height: 56px;
+    line-height: 56px;
+    padding-inline: 12px;
+  }
+
+  .mobile-main {
+    margin-top: 56px;
+  }
+
+  .layout-content {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    width: auto;
+  }
+}
 </style>

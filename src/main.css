@@ -13,6 +13,12 @@ body {
 html {
     height: 100%;
     color: #0f172a !important;
+    overflow-x: hidden;
+}
+
+body,
+#app {
+    overflow-x: hidden;
 }
 
 ul {

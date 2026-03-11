@@ -9,6 +9,7 @@ import {
   sendPhoneOtp,
   sendVerifyEmail,
 } from "@/api/firebaseAuth.js";
+import { addActivityLog } from "@/utils/activityLog.js";
 
 export default {
   name: "Login",
@@ -144,11 +145,15 @@ export default {
 
       localStorage.setItem("user", JSON.stringify(userProfile));
       localStorage.setItem("isLogin", true);
+      addActivityLog({
+        action: "login_email",
+        module: "auth",
+        detail: `Đăng nhập email ${values.email}`,
+      });
       this.$message.success("Đăng nhập thành công!");
       this.$router.push({ path: "/" });
     },
     async loginByPhone(values) {
-      console.log("⛷️⛷️⛷️ ~ values:", values)
       if (!this.confirmationResult) {
         this.$message.error("Vui lòng gửi OTP trước.");
         return;
@@ -170,6 +175,11 @@ export default {
 
       localStorage.setItem("user", JSON.stringify(userProfile));
       localStorage.setItem("isLogin", true);
+      addActivityLog({
+        action: "login_phone",
+        module: "auth",
+        detail: `Đăng nhập SĐT ${this.lastPhoneE164}`,
+      });
       this.$message.success("Đăng nhập thành công!");
       this.$router.push({ path: "/" });
     },
@@ -347,5 +357,26 @@ h2 {
 
 .ant-tabs {
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .auth-page {
+    align-items: flex-start;
+    padding: 16px 10px;
+  }
+
+  .login-form {
+    width: 100%;
+    max-width: 460px;
+    padding: 18px 14px 12px;
+  }
+
+  .otp-row {
+    flex-direction: column;
+  }
+
+  .otp-row .ant-btn {
+    width: 100%;
+  }
 }
 </style>

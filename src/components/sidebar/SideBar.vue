@@ -1,5 +1,5 @@
 <script setup>
-import { FundProjectionScreenOutlined, LockOutlined, WalletOutlined } from '@ant-design/icons-vue';
+import { BarChartOutlined, FundProjectionScreenOutlined, LockOutlined, WalletOutlined } from '@ant-design/icons-vue';
 import { RouterLink } from 'vue-router';
 
 </script>
@@ -18,6 +18,10 @@ import { RouterLink } from 'vue-router';
       <RouterLink to="/revenue" class="nav-link">
         <WalletOutlined/>
         Ghi nợ cho vay
+      </RouterLink>
+      <RouterLink to="/reports" class="nav-link">
+        <BarChartOutlined/>
+        Báo cáo
       </RouterLink>
     </ul>
   </div>
@@ -66,5 +70,29 @@ ul {
 
 .nav-link :deep(svg) {
   font-size: 16px;
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    width: 100%;
+    padding: 10px;
+  }
+
+  ul {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 10px;
+  }
+
+  .nav-link {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .nav-link {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
 }
 </style>

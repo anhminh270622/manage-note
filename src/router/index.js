@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from "@/components/dashboard/Dashboard.vue";
 import DashboardPassword from "@/components/list-password/Dashboard.vue";
 import Revenue from "@/components/revenue/Revenue.vue";
+import Reports from "@/components/reports/Reports.vue";
 import ListPassword from "@/components/list-password/ListPassword.vue";
 import Login from "@/components/login/Login.vue";
 import Register from "@/components/register/Register.vue";
@@ -29,6 +30,12 @@ const routes = [
         path: '/revenue',
         name: 'Revenue',
         component: Revenue,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/reports',
+        name: 'Reports',
+        component: Reports,
         meta: { requiresAuth: true }
     },
     {

@@ -6,6 +6,7 @@ import { h } from "vue";
 import { addRevenue, deleteRevenue, editRevenue, getAllRevenue } from "@/api/revenue.js";
 import { isNumber } from "@/constans/index.js";
 import dayjs from 'dayjs';
+import { addActivityLog } from "@/utils/activityLog.js";
 
 export default {
   name: 'Revenue',
@@ -46,6 +47,23 @@ export default {
         .filter(item => item.tag === 1)
         .reduce((total, item) => total + (Number(item.amount) || 0), 0);
       return total > 0 ? total.toLocaleString('en-US') : '0';
+    },
+    overdueCount() {
+      const now = dayjs();
+      return this.dataSource.filter((item) => {
+        if (!item.endDate) return false;
+        const end = dayjs(item.endDate, "DD/MM/YYYY");
+        return end.isValid() && end.isBefore(now, "day");
+      }).length;
+    },
+    dueSoonCount() {
+      const now = dayjs();
+      const soon = now.add(7, "day");
+      return this.dataSource.filter((item) => {
+        if (!item.endDate) return false;
+        const end = dayjs(item.endDate, "DD/MM/YYYY");
+        return end.isValid() && (end.isSame(now, "day") || (end.isAfter(now, "day") && end.isBefore(soon, "day")));
+      }).length;
     },
     amountSliderMax() {
       const maxAmount = Math.max(
@@ -155,6 +173,11 @@ export default {
           }
           deleteRevenue(record.key).then(() => {
             this.$message.success('Xóa thành công');
+            addActivityLog({
+              action: "delete_revenue",
+              module: "revenue",
+              detail: `Xóa khoản "${record.name || "không tên"}"`,
+            });
             this.dataSource = this.dataSource.filter(item => item.key !== record.key);
             this.loadData()
           }).catch(() => {
@@ -180,6 +203,11 @@ export default {
         record
       ).then(() => {
         this.$message.success('Cập nhật thành công');
+        addActivityLog({
+          action: "edit_revenue",
+          module: "revenue",
+          detail: `Cập nhật khoản "${record.name || "không tên"}"`,
+        });
         record.isEditing = false;
       }).catch(() => {
         this.$message.error('Lỗi khi cập nhật');
@@ -203,6 +231,11 @@ export default {
       }
       addRevenue(params).then((res) => {
         this.$message.success('Thêm mới thành công');
+        addActivityLog({
+          action: "add_revenue",
+          module: "revenue",
+          detail: "Thêm khoản vay/trả mới",
+        });
         const firebaseKey = res?.data?.name;
         if (!firebaseKey) {
           this.loadData();
@@ -281,35 +314,49 @@ export default {
 <template>
   <div class="page-revenue">
     <Breadcrumb :breadcrumb="breadcrumb" title="Vay trả" />
+    <a-alert
+      v-if="overdueCount > 0"
+      type="error"
+      show-icon
+      :message="`Có ${overdueCount} khoản đã quá hạn thanh toán.`"
+      class="alert-item"
+    />
+    <a-alert
+      v-if="dueSoonCount > 0"
+      type="warning"
+      show-icon
+      :message="`Có ${dueSoonCount} khoản sắp đến hạn trong 7 ngày.`"
+      class="alert-item"
+    />
 
     <div class="filter-section">
       <h3 class="filter-title">Lọc dữ liệu</h3>
-      <a-row :gutter="16" align="middle">
-        <a-col :span="6">
+      <a-row :gutter="[12, 12]" align="middle">
+        <a-col :xs="24" :sm="12" :lg="6">
           <a-input v-model:value="filters.name" placeholder="Tìm kiếm theo tên" allow-clear />
         </a-col>
-        <a-col :span="6">
+        <a-col :xs="24" :sm="12" :lg="6">
           <a-select v-model:value="filters.tag" placeholder="Lọc theo tag" style="width: 100%" allow-clear>
             <a-select-option v-for="tag in tagOption" :key="tag.id" :value="tag.id">
               {{ tag.name }}
             </a-select-option>
           </a-select>
         </a-col>
-        <a-col :span="6">
+        <a-col :xs="24" :sm="12" :lg="6">
           <a-select v-model:value="filters.sortAmount" placeholder="Sắp xếp theo tiền" style="width: 100%" allow-clear>
             <a-select-option value="asc">Tiền tăng dần</a-select-option>
             <a-select-option value="desc">Tiền giảm dần</a-select-option>
           </a-select>
         </a-col>
-        <a-col :span="6">
+        <a-col :xs="24" :sm="12" :lg="6">
           <a-select v-model:value="filters.sortDate" placeholder="Sắp xếp ngày bắt đầu" style="width: 100%" allow-clear>
             <a-select-option value="asc">Ngày tăng dần</a-select-option>
             <a-select-option value="desc">Ngày giảm dần</a-select-option>
           </a-select>
         </a-col>
       </a-row>
-      <a-row :gutter="16" align="middle" style="margin-top: 12px;">
-        <a-col :span="12" class="amount-slider-wrap">
+      <a-row :gutter="[12, 12]" align="middle" style="margin-top: 12px;">
+        <a-col :xs="24" :lg="12" class="amount-slider-wrap">
           <div class="amount-slider-label">
             Khoảng tiền:
             <span>{{ amountRangeModel[0].toLocaleString('en-US') }} đ - {{ amountRangeModel[1].toLocaleString('en-US') }} đ</span>
@@ -322,7 +369,7 @@ export default {
             :step="50000"
           />
         </a-col>
-        <a-col :span="12">
+        <a-col :xs="24" :lg="12">
           <a-range-picker
             v-model:value="filters.startDateRange"
             format="DD/MM/YYYY"
@@ -459,6 +506,10 @@ export default {
   border: 1px solid #e2e8f0;
 }
 
+.alert-item {
+  margin-bottom: 12px;
+}
+
 .amount-slider-wrap {
   display: flex;
   flex-direction: column;
@@ -532,5 +583,21 @@ export default {
 
 .revenue-table :deep(.ant-table-cell) {
   border-color: #eef2f7 !important;
+}
+
+@media (max-width: 768px) {
+  .add-revenue {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .btn-add {
+    width: 100%;
+  }
+
+  .list-revenue {
+    padding: 8px;
+  }
 }
 </style>

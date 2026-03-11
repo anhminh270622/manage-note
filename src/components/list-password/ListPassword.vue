@@ -4,6 +4,8 @@
     <div class="add-password">
       <div class="info-table">
         <div>Tổng số bản ghi: <span class="value">{{ dataSource.length }}</span></div>
+        <div>Mật khẩu yếu: <span class="health-value danger">{{ weakPasswordCount }}</span></div>
+        <div>Mật khẩu trùng: <span class="health-value warning">{{ reusedPasswordCount }}</span></div>
       </div>
       <a-button type="primary" @click="addRecord" class="btn-add">
         Thêm mới
@@ -95,6 +97,7 @@ import {
   editTypePassword,
   getAllTypePassword
 } from "@/api/password.js";
+import { addActivityLog } from "@/utils/activityLog.js";
 
 export default {
   name: 'ListPassword',
@@ -114,6 +117,20 @@ export default {
       userId: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).userId : '',
     };
   },
+  computed: {
+    weakPasswordCount() {
+      return this.dataSource.filter((item) => this.getPasswordScore(item.password) < 2).length;
+    },
+    reusedPasswordCount() {
+      const map = {};
+      this.dataSource.forEach((item) => {
+        const pass = String(item.password || "").trim();
+        if (!pass) return;
+        map[pass] = (map[pass] || 0) + 1;
+      });
+      return Object.values(map).filter((count) => count > 1).reduce((sum, count) => sum + count, 0);
+    },
+  },
   mounted() {
     this.type = this.$route.params.passwordType
     this.getAllTypePassword();
@@ -123,6 +140,15 @@ export default {
     isNumber,
     SaveOutlined,
     DeleteOutlined, EyeInvisibleOutlined, h, EditOutlined,
+    getPasswordScore(password) {
+      const pass = String(password || "");
+      let score = 0;
+      if (pass.length >= 8) score += 1;
+      if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score += 1;
+      if (/\d/.test(pass)) score += 1;
+      if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+      return score;
+    },
     handlePhoneInput(event) {
       // Chỉ cho phép nhập số
       const value = event.target.value.replace(/\D/g, '');
@@ -143,6 +169,11 @@ export default {
       this.loading = true;
       editTypePassword(record).then(() => {
         this.$message.success('Cập nhật thành công');
+        addActivityLog({
+          action: "edit_password_record",
+          module: "password",
+          detail: `Cập nhật bản ghi "${record.name || "không tên"}"`,
+        });
         record.isEditing = false;
       }).catch(() => {
         this.$message.error('Lỗi khi cập nhật');
@@ -168,7 +199,25 @@ export default {
       }
       addTypePassword(params).then(res => {
         this.$message.success('Thêm thành công');
-        this.getAllTypePassword()
+        addActivityLog({
+          action: "add_password_record",
+          module: "password",
+          detail: "Thêm bản ghi mật khẩu mới",
+        });
+        const firebaseKey = res?.data?.name;
+        if (!firebaseKey) {
+          this.getAllTypePassword();
+          return;
+        }
+
+        this.dataSource = [
+          {
+            ...params,
+            key: firebaseKey,
+            isEditing: true,
+          },
+          ...this.dataSource,
+        ];
       }).catch(() => {
         this.$message.error('Lỗi khi thêm mới');
       }).finally(() => {
@@ -189,6 +238,11 @@ export default {
           }
           deleteTypePassword(record.key).then(() => {
             this.$message.success('Xóa thành công');
+            addActivityLog({
+              action: "delete_password_record",
+              module: "password",
+              detail: `Xóa bản ghi "${record.name || "không tên"}"`,
+            });
             this.dataSource = this.dataSource.filter(item => item.key !== record.key);
             this.getAllTypePassword()
           }).catch(() => {
@@ -246,8 +300,11 @@ export default {
 .info-table {
   display: flex;
   align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
   color: #475569;
   font-size: 14px;
+  padding: 2px 0;
 }
 
 .value {
@@ -255,6 +312,19 @@ export default {
   font-size: 18px;
   color: #0f172a;
   margin-left: 6px;
+}
+
+.health-value {
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.health-value.danger {
+  color: #ef4444;
+}
+
+.health-value.warning {
+  color: #f59e0b;
 }
 
 .btn-add {
@@ -283,6 +353,7 @@ export default {
   background: #f8fafc;
   color: #334155;
   font-weight: 600;
+  padding: 12px 16px !important;
 }
 
 .password-table :deep(.ant-table-tbody > tr > td) {
@@ -300,5 +371,26 @@ export default {
 
 .password-table :deep(.ant-pagination-item-active a) {
   color: #2563eb;
+}
+
+@media (max-width: 768px) {
+  .add-password {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .info-table {
+    display: grid;
+    gap: 6px;
+  }
+
+  .btn-add {
+    width: 100%;
+  }
+
+  .list-password {
+    padding: 8px;
+  }
 }
 </style>

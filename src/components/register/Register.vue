@@ -7,6 +7,7 @@ import {
   registerWithEmailPassword,
   sendVerifyEmail,
 } from "@/api/firebaseAuth.js";
+import { addActivityLog } from "@/utils/activityLog.js";
 
 export default {
   name: "Register",
@@ -74,6 +75,11 @@ export default {
         };
         await registerUser(params);
         await logoutFirebaseAuth();
+        addActivityLog({
+          action: "register",
+          module: "auth",
+          detail: `Đăng ký tài khoản ${email}`,
+        });
         this.$message.success('Đăng ký thành công, vui lòng xác thực email trước khi đăng nhập!');
         this.$router.push('/login');
       } catch (error) {
@@ -201,5 +207,18 @@ h2 {
 
 .ant-form-item {
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .auth-page {
+    align-items: flex-start;
+    padding: 16px 10px;
+  }
+
+  .register-form {
+    width: 100%;
+    max-width: 420px;
+    padding: 18px 14px 12px;
+  }
 }
 </style>
